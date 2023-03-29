@@ -16,10 +16,8 @@ Options:
   -h, --help    Show this help
 '''
 
-import sys
 import os
 import re
-import struct
 from PIL import Image
 from docopt import docopt
 
@@ -56,14 +54,14 @@ def render_vga(file):
     vga_file = open(file, 'r')
 
     # From: http://tinyvga.com/vga-timing/
-    res_x = 1280
-    res_y = 1024
+    res_x = 640
+    res_y = 480
 
     # Pixel Clock: ~10 ns, 108 MHz
-    pixel_clk = 10e-9
+    pixel_clk = 39.7219464e-9
 
-    back_porch_x = 318
-    back_porch_y = 38
+    back_porch_x = 48
+    back_porch_y = 33
 
     h_counter = 0
     v_counter = 0
