@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-'''VGASimulator.py - Pedro José Pereira Vieito © 2016
+"""VGASimulator.py - Pedro José Pereira Vieito © 2016
   View VGA output from a VHDL simulation.
 
   Ported from VGA Simulator:
@@ -8,13 +8,7 @@
 
   More info about how to generate VGA output from VHDL simulation here:
   http://ericeastwood.com/blog/8/vga-simulator-getting-started
-
-Usage:
-  VGASimulator.py <file> [<frames>]
-
-Options:
-  -h, --help    Show this help
-'''
+"""
 from argparse import ArgumentParser
 import re
 # If you aren't familiar with py, this error is better than reading a traceback
@@ -24,21 +18,19 @@ except ImportError:
     print("Error: Run `pip install Pillow` and try again.")
     exit(1)
 
-def time_conversion(unit_from, unit_to, value):
-    # convert between the following:
-    # fs, ps, ns, us, ms, sec, min, hr
-    unit_dict = {
-        "fs": .000000000000001,
-        "ps": .000000000001,
-        "ns": .000000001,
-        "us": .000001,
-        "ms": .001,
+def time_conversion(unit_from: str, unit_to: str, value: int) -> float:
+    seconds_to = {
+        "fs": 1e-15,
+        "ps": 1e-12,
+        "ns": 1e-9,
+        "us": 1e-6,
+        "ms": 1e-3,
         "s": 1,
         "sec": 1,
         "min": 60,
         "hr": 3600,
     }
-    return unit_dict[unit_from] / unit_dict[unit_to] * value
+    return seconds_to[unit_from] / seconds_to[unit_to] * value
 
 
 def bin_to_color(binary):
@@ -84,8 +76,8 @@ def render_vga(file, frames_limit):
     for vga_line in vga_file:
 
         pattern = re.compile("^([0-9]+) (fs|ps|ns|us|ms|sec|min|hr): "
-                             "(0|1) (0|1) ((?:0|1)+) ((?:0|1)+) "
-                             "((?:0|1)+)")
+                                 "(0|1) (0|1) ((?:0|1)+) ((?:0|1)+) "
+                                 "((?:0|1)+)")
         match = pattern.match(vga_line)
 
         if (match):
@@ -146,7 +138,7 @@ def render_vga(file, frames_limit):
                 # Add a tolerance so that the timing doesn't have to be bang on
                 tolerance = 5e-9
                 if time_last_pixel >= (pixel_clk - tolerance) and \
-                   time_last_pixel <= (pixel_clk + tolerance):
+                    time_last_pixel <= (pixel_clk + tolerance):
                     # Increment this so we know how far we are
                     # After the hsync pulse
                     back_porch_x_count += 1
@@ -154,7 +146,7 @@ def render_vga(file, frames_limit):
                     # If we are past the back porch
                     # Then we can start drawing on the canvas
                     if back_porch_x_count >= back_porch_x and \
-                       back_porch_y_count >= back_porch_y:
+                        back_porch_y_count >= back_porch_y:
 
                         # Add pixel
                         if h_counter < res_x and v_counter < res_y:
