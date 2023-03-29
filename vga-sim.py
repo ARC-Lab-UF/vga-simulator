@@ -10,7 +10,6 @@
   http://ericeastwood.com/blog/8/vga-simulator-getting-started
 """
 from argparse import ArgumentParser
-import re
 # If you aren't familiar with py, this error is better than reading a traceback
 try:
     from PIL import Image
@@ -38,6 +37,20 @@ def bin_to_color(binary):
     # of the binary number and the value.
     # This is why your rgb values need to be padded to the full bit depth
     return int(int(binary, 2) / int("1" * len(binary), 2) * 255)
+
+
+def parse_line(line: str):
+    # 50 ns: 1 1 000 000 00
+    time, unit, hsync, vsync, r, g, b = line.replace(':', '').split()
+
+    return (
+        time_conversion(unit, "sec", int(time)), 
+        int(hsync), 
+        int(vsync), 
+        bin_to_color(r), 
+        bin_to_color(g), 
+        bin_to_color(b)
+    )
 
 
 def render_vga(file, frames_limit):
@@ -75,94 +88,86 @@ def render_vga(file, frames_limit):
 
     for vga_line in vga_file:
 
-        pattern = re.compile("^([0-9]+) (fs|ps|ns|us|ms|sec|min|hr): "
-                                 "(0|1) (0|1) ((?:0|1)+) ((?:0|1)+) "
-                                 "((?:0|1)+)")
-        match = pattern.match(vga_line)
+        if 'U' in vga_line:
+            print("Warning: Undefined values")
+            continue  # Skip this timestep since it's not valid 
 
-        if (match):
+        time, hsync, vsync, red, green, blue = parse_line(vga_line)
 
-            time = time_conversion(match.group(2), "sec", int(match.group(1)))
-            hsync = int(match.group(3))
-            vsync = int(match.group(4))
-            red = bin_to_color(match.group(5))
-            green = bin_to_color(match.group(6))
-            blue = bin_to_color(match.group(7))
+        time_last_pixel += time - time_last_line
 
-            time_last_pixel += time - time_last_line
+        if last_hsync == 0 and hsync == 1:
+            h_counter = 0
 
-            if last_hsync == 0 and hsync == 1:
+            # Move to the next row, if past back porch
+            if back_porch_y_count >= back_porch_y:
+                v_counter += 1
+
+            # Increment this so we know how far we are
+            # after the vsync pulse
+            back_porch_y_count += 1
+
+            # Set this to zero so we can count up to the actual
+            back_porch_x_count = 0
+
+            # Sync on sync pulse
+            time_last_pixel = 0
+
+        if last_vsync == 0 and vsync == 1:
+
+            # Show frame or create new frame
+            if vga_output:
+                vga_output.show("VGA Output")
+            else:
+                vga_output = Image.new('RGB', (res_x, res_y), (0, 0, 0))
+
+            if frame_count < frames_limit or frames_limit == -1:
+                print("[+] VSYNC: Decoding frame", frame_count)
+
+                frame_count += 1
                 h_counter = 0
-
-                # Move to the next row, if past back porch
-                if back_porch_y_count >= back_porch_y:
-                    v_counter += 1
-
-                # Increment this so we know how far we are
-                # after the vsync pulse
-                back_porch_y_count += 1
+                v_counter = 0
 
                 # Set this to zero so we can count up to the actual
-                back_porch_x_count = 0
+                back_porch_y_count = 0
 
                 # Sync on sync pulse
                 time_last_pixel = 0
 
-            if last_vsync == 0 and vsync == 1:
+            else:
+                print("[ ]", frames_limit, "frames decoded")
+                exit(0)
 
-                # Show frame or create new frame
-                if vga_output:
-                    vga_output.show("VGA Output")
-                else:
-                    vga_output = Image.new('RGB', (res_x, res_y), (0, 0, 0))
+        if vga_output and vsync:
 
-                if frame_count < frames_limit or frames_limit == -1:
-                    print("[+] VSYNC: Decoding frame", frame_count)
+            # Add a tolerance so that the timing doesn't have to be bang on
+            tolerance = 5e-9
+            if time_last_pixel >= (pixel_clk - tolerance) and \
+                time_last_pixel <= (pixel_clk + tolerance):
+                # Increment this so we know how far we are
+                # After the hsync pulse
+                back_porch_x_count += 1
 
-                    frame_count += 1
-                    h_counter = 0
-                    v_counter = 0
+                # If we are past the back porch
+                # Then we can start drawing on the canvas
+                if back_porch_x_count >= back_porch_x and \
+                    back_porch_y_count >= back_porch_y:
 
-                    # Set this to zero so we can count up to the actual
-                    back_porch_y_count = 0
+                    # Add pixel
+                    if h_counter < res_x and v_counter < res_y:
+                        vga_output.putpixel((h_counter, v_counter),
+                                            (red, green, blue))
 
-                    # Sync on sync pulse
-                    time_last_pixel = 0
+                # Move to the next pixel, if past back porch
+                if back_porch_x_count >= back_porch_x:
+                    h_counter += 1
 
-                else:
-                    print("[ ]", frames_limit, "frames decoded")
-                    exit(0)
+                # Reset time since we dealt with it
+                time_last_pixel = 0
 
-            if vga_output and vsync:
-
-                # Add a tolerance so that the timing doesn't have to be bang on
-                tolerance = 5e-9
-                if time_last_pixel >= (pixel_clk - tolerance) and \
-                    time_last_pixel <= (pixel_clk + tolerance):
-                    # Increment this so we know how far we are
-                    # After the hsync pulse
-                    back_porch_x_count += 1
-
-                    # If we are past the back porch
-                    # Then we can start drawing on the canvas
-                    if back_porch_x_count >= back_porch_x and \
-                        back_porch_y_count >= back_porch_y:
-
-                        # Add pixel
-                        if h_counter < res_x and v_counter < res_y:
-                            vga_output.putpixel((h_counter, v_counter),
-                                                (red, green, blue))
-
-                    # Move to the next pixel, if past back porch
-                    if back_porch_x_count >= back_porch_x:
-                        h_counter += 1
-
-                    # Reset time since we dealt with it
-                    time_last_pixel = 0
-
-            last_hsync = hsync
-            last_vsync = vsync
-            time_last_line = time
+        last_hsync = hsync
+        last_vsync = vsync
+        time_last_line = time
 
 def main():
     parser = ArgumentParser("VGA Simulator", "Draws images from a corresponding HDL simulation file.")
