@@ -15,15 +15,14 @@ Usage:
 Options:
   -h, --help    Show this help
 '''
-
-import os
+from argparse import ArgumentParser
 import re
-from PIL import Image
-from docopt import docopt
-
-__author__ = "Pedro José Pereira Vieito"
-__email__ = "pvieito@gmail.com"
-
+# If you aren't familiar with py, this error is better than reading a traceback
+try:
+    from PIL import Image
+except ImportError:
+    print("Error: Run `pip install Pillow` and try again.")
+    exit(1)
 
 def time_conversion(unit_from, unit_to, value):
     # convert between the following:
@@ -49,7 +48,7 @@ def bin_to_color(binary):
     return int(int(binary, 2) / int("1" * len(binary), 2) * 255)
 
 
-def render_vga(file):
+def render_vga(file, frames_limit):
 
     vga_file = open(file, 'r')
 
@@ -173,19 +172,25 @@ def render_vga(file):
             last_vsync = vsync
             time_last_line = time
 
-args = docopt(__doc__)
-file = args['<file>']
+def main():
+    parser = ArgumentParser("VGA Simulator", "Draws images from a corresponding HDL simulation file.")
+    parser.add_argument("filename", help="Output file from your testbench", type=str)
+    parser.add_argument("width", help="Screen width in pixels", type=int)
+    parser.add_argument("height", help="Screen height in pixels", type=int)
+    parser.add_argument("px_clk", help="Pixel clock frequency in MHz", type=float)
+    parser.add_argument("hbp", help="Length of horizontal back porch in pixels", type=int)
+    parser.add_argument("vbp", help="Length of vertical back porch in pixels", type=int)
+    parser.add_argument("--max-frames", help="Maximum number of frames to draw. Default: Draw all frames", type=int, required=False, default=-1)
 
-if args['<frames>']:
-    frames_limit = int(args['<frames>'])
-else:
-    frames_limit = -1
+    args = parser.parse_args()
 
-vga_extensions = ['.vga', '.txt']
+    with open(args.filename) as f:
+        lines = f.readlines()
 
-if os.path.isfile(file) and os.path.splitext(file)[1] in vga_extensions:
-    render_vga(file)
-    print("[ ]", "Final frame decoded")
-else:
-    print('[x] VGA output file (.vga) not found.')
+    render_vga(args.filename, args.max_frames)
+
+    print("Goodbye.")
+
+if __name__ == "__main__":
+    main()
 
