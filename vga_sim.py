@@ -25,14 +25,17 @@ def time_conversion(value: int, unit_from: str, unit_to: str) -> float:
     return seconds_to[unit_from] / seconds_to[unit_to] * value
 
 
-def bin_to_color(binary: str) -> int:
-    """Maps a binary number to 0-255. 
-    Supply the width of the original binary number
-    (e.g., "0101" is value of 5, width of 4.)"""
-    # Returns a value 0-255 corresponding to the bit depth
-    # of the binary number and the value.
-    # This is why your rgb values need to be padded to the full bit depth
-    return int(int(binary, 2) / int("1" * len(binary), 2) * 255)
+def map_binary_width(value: int, from_width: int, to_width=8) -> int:
+    """Map a number to `new_width` bits (0.. 2 ** new_width - 1).
+    Basically the same as a typical arduino-style `map()` function,
+    except you can specify the width in bits here instead of min/max values. 
+    """
+    old_max_val = 2 ** from_width - 1
+    new_max_val = 2 ** to_width - 1
+
+    # Since we're doing integer division, be sure to mult by new_max_val first. 
+    # Otherwise, `value // old_max_val` is almost always == 0.
+    return new_max_val * value // old_max_val
 
 
 def parse_line(line: str):
@@ -47,9 +50,9 @@ def parse_line(line: str):
         time_conversion(int(time), unit, "sec"), 
         int(hsync), 
         int(vsync), 
-        bin_to_color(r), 
-        bin_to_color(g), 
-        bin_to_color(b)
+        map_binary_width(int(r, 2), len(r)), 
+        map_binary_width(int(g, 2), len(g)), 
+        map_binary_width(int(b, 2), len(b))
     )
 
 
