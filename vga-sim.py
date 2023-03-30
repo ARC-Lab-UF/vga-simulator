@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
-"""VGASimulator.py - Pedro José Pereira Vieito © 2016
-  View VGA output from a VHDL simulation.
-
-  Ported from VGA Simulator:
-  https://github.com/MadLittleMods/vga-simulator
-  by Eric Eastwood <contact@ericeastwood.com>
-
-  More info about how to generate VGA output from VHDL simulation here:
-  http://ericeastwood.com/blog/8/vga-simulator-getting-started
-"""
 from argparse import ArgumentParser
+from io import TextIOWrapper
 # If you aren't familiar with py, this error is better than reading a traceback
 try:
     from PIL import Image
@@ -17,7 +8,9 @@ except ImportError:
     print("Error: Run `pip install Pillow` and try again.")
     exit(1)
 
-def time_conversion(unit_from: str, unit_to: str, value: int) -> float:
+
+def time_conversion(value: int, unit_from: str, unit_to: str) -> float:
+    """Convert a value between units of time"""
     seconds_to = {
         "fs": 1e-15,
         "ps": 1e-12,
@@ -32,7 +25,10 @@ def time_conversion(unit_from: str, unit_to: str, value: int) -> float:
     return seconds_to[unit_from] / seconds_to[unit_to] * value
 
 
-def bin_to_color(binary):
+def bin_to_color(binary: str) -> int:
+    """Maps a binary number to 0-255. 
+    Supply the width of the original binary number
+    (e.g., "0101" is value of 5, width of 4.)"""
     # Returns a value 0-255 corresponding to the bit depth
     # of the binary number and the value.
     # This is why your rgb values need to be padded to the full bit depth
@@ -40,11 +36,15 @@ def bin_to_color(binary):
 
 
 def parse_line(line: str):
-    # 50 ns: 1 1 000 000 00
+    """Parses a line from the vga text file.
+    Lines tend to look like this:
+    `50 ns: 1 1 000 000 00`
+    The function returns a tuple of each of these in appropriate data types (see below).
+    """
     time, unit, hsync, vsync, r, g, b = line.replace(':', '').split()
 
     return (
-        time_conversion(unit, "sec", int(time)), 
+        time_conversion(int(time), unit, "sec"), 
         int(hsync), 
         int(vsync), 
         bin_to_color(r), 
@@ -53,19 +53,11 @@ def parse_line(line: str):
     )
 
 
-def render_vga(file, frames_limit):
-
-    vga_file = open(file, 'r')
-
+def render_vga(file: TextIOWrapper, width: int, height: int, pixel_freq_MHz: float, hbp: int, vbp: int, max_frames: int) -> None:
     # From: http://tinyvga.com/vga-timing/
-    res_x = 640
-    res_y = 480
 
     # Pixel Clock: ~10 ns, 108 MHz
-    pixel_clk = 39.7219464e-9
-
-    back_porch_x = 48
-    back_porch_y = 33
+    pixel_clk = 1e-6 / pixel_freq_MHz 
 
     h_counter = 0
     v_counter = 0
@@ -84,9 +76,9 @@ def render_vga(file, frames_limit):
     vga_output = None
 
     print('[ ] VGA Simulator')
-    print('[ ] Resolution:', res_x, '×', res_y)
+    print('[ ] Resolution:', width, '×', height)
 
-    for vga_line in vga_file:
+    for vga_line in file:
 
         if 'U' in vga_line:
             print("Warning: Undefined values")
@@ -100,7 +92,7 @@ def render_vga(file, frames_limit):
             h_counter = 0
 
             # Move to the next row, if past back porch
-            if back_porch_y_count >= back_porch_y:
+            if back_porch_y_count >= vbp:
                 v_counter += 1
 
             # Increment this so we know how far we are
@@ -119,9 +111,9 @@ def render_vga(file, frames_limit):
             if vga_output:
                 vga_output.show("VGA Output")
             else:
-                vga_output = Image.new('RGB', (res_x, res_y), (0, 0, 0))
+                vga_output = Image.new('RGB', (width, height), (0, 0, 0))
 
-            if frame_count < frames_limit or frames_limit == -1:
+            if frame_count < max_frames or max_frames == -1:
                 print("[+] VSYNC: Decoding frame", frame_count)
 
                 frame_count += 1
@@ -135,7 +127,7 @@ def render_vga(file, frames_limit):
                 time_last_pixel = 0
 
             else:
-                print("[ ]", frames_limit, "frames decoded")
+                print("[ ]", max_frames, "frames decoded")
                 exit(0)
 
         if vga_output and vsync:
@@ -150,16 +142,16 @@ def render_vga(file, frames_limit):
 
                 # If we are past the back porch
                 # Then we can start drawing on the canvas
-                if back_porch_x_count >= back_porch_x and \
-                    back_porch_y_count >= back_porch_y:
+                if back_porch_x_count >= hbp and \
+                    back_porch_y_count >= vbp:
 
                     # Add pixel
-                    if h_counter < res_x and v_counter < res_y:
+                    if h_counter < width and v_counter < height:
                         vga_output.putpixel((h_counter, v_counter),
                                             (red, green, blue))
 
                 # Move to the next pixel, if past back porch
-                if back_porch_x_count >= back_porch_x:
+                if back_porch_x_count >= hbp:
                     h_counter += 1
 
                 # Reset time since we dealt with it
@@ -181,10 +173,8 @@ def main():
 
     args = parser.parse_args()
 
-    with open(args.filename) as f:
-        lines = f.readlines()
-
-    render_vga(args.filename, args.max_frames)
+    with open(args.filename) as file:
+        render_vga(file, args.width, args.height, args.px_clk, args.hbp, args.vbp, args.max_frames)
 
     print("Goodbye.")
 
