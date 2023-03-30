@@ -3,7 +3,12 @@ Original VGA Simulator: https://www.ericeastwood.com/lab/vga-simulator/
 
 Modified from [pvieito/VGASimulator.py](https://gist.github.com/pvieito/8cdb54a9a03fd36e51c8df6e331a3006)
 
-
+## Prerequisites
+- This project was tested on Python 3.11.2.
+- Install dependencies:
+```bash
+pip install Pillow
+```
 
 # Setup
 Paste the contents of `log_signals.vhdl` into your VGA core testbench file. 
