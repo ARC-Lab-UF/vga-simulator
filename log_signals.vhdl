@@ -16,7 +16,6 @@ begin
     if rising_edge(clk) then
         -- Write current sim time
         write(line_el, now); 
-        write(line_el, ":"); 
 
         -- Write sync signals
         write(line_el, " ");

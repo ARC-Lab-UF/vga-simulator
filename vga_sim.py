@@ -44,7 +44,7 @@ def parse_line(line: str):
     `50 ns: 1 1 000 000 00`
     The function returns a tuple of each of these in appropriate data types (see below).
     """
-    time, unit, hsync, vsync, r, g, b = line.replace(':', '').split()
+    time, unit, hsync, vsync, r, g, b = line.split()
 
     return (
         time_conversion(int(time), unit, "sec"), 
