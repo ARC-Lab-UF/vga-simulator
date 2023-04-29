@@ -25,30 +25,30 @@ Run `./vga_sim.py --help` for usage instructions.
 Or, run via the Python interpreter: `python vga_sim.py --help`
 
 ```
-❯ ./vga_sim.py -h
+❯ ./vga_sim.py --help
 usage: Draws images from a corresponding HDL simulation file.
 
 positional arguments:
   filename              Output file from your testbench
-  width                 Screen width in pixels
-  height                Screen height in pixels
-  px_clk                Pixel clock frequency in MHz
-  hbp                   Length of horizontal back porch in pixels
-  vbp                   Length of vertical back porch in pixels
+  width                 Screen width in pixels (default: 640)
+  height                Screen height in pixels (default: 480)
+  px_clk                Pixel clock frequency in MHz (default: 25.175)
+  hbp                   Length of horizontal back porch in pixels (default: 48)
+  vbp                   Length of vertical back porch in pixels (default: 33)
 
 options:
   -h, --help            show this help message and exit
   --max-frames MAX_FRAMES
-                        Maximum number of frames to draw. Default: Draw all frames
+                        Maximum number of frames to draw. Default: Draw all frames (default: -1)
 ```
 
 ## Examples
-To run a 640x480 @60Hz ([standard](http://tinyvga.com/vga-timing/640x480@60Hz)), run `./vga_sim.py vga_log.txt`
-or, `python vga_sim.py vga_log.txt`
+The default configuration of the simulator is 640x480 @ 60Hz ([standard](http://tinyvga.com/vga-timing/640x480@60Hz)). Simply run `./vga_sim.py vga_log.txt`
+or, `python vga_sim.py vga_log.txt`.
 
 Output images can be saved by using the save command in your image viewer.
 
-To customize resolution/framerate/etc., use the positional arguments specified in `./vga_sim.py --help`.
+To customize resolution/framerate/etc., use the positional command-line arguments specified in `./vga_sim.py --help`.
 
 # Testing
 To run unit tests, simply run `python -m unittest` in the root directory of the project.
