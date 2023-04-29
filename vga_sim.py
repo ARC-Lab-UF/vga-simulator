@@ -167,11 +167,11 @@ def render_vga(file: TextIOWrapper, width: int, height: int, pixel_freq_MHz: flo
 def main():
     parser = ArgumentParser("VGA Simulator", "Draws images from a corresponding HDL simulation file.")
     parser.add_argument("filename", help="Output file from your testbench", type=str)
-    parser.add_argument("width", help="Screen width in pixels", type=int)
-    parser.add_argument("height", help="Screen height in pixels", type=int)
-    parser.add_argument("px_clk", help="Pixel clock frequency in MHz", type=float)
-    parser.add_argument("hbp", help="Length of horizontal back porch in pixels", type=int)
-    parser.add_argument("vbp", help="Length of vertical back porch in pixels", type=int)
+    parser.add_argument("width", help="Screen width in pixels", type=int, nargs='?', default=640)
+    parser.add_argument("height", help="Screen height in pixels", type=int, nargs='?', default=480)
+    parser.add_argument("px_clk", help="Pixel clock frequency in MHz", type=float, nargs='?', default=25.175)
+    parser.add_argument("hbp", help="Length of horizontal back porch in pixels", type=int, nargs='?', default=48)
+    parser.add_argument("vbp", help="Length of vertical back porch in pixels", type=int, nargs='?', default=33)
     parser.add_argument("--max-frames", help="Maximum number of frames to draw. Default: Draw all frames", type=int, required=False, default=-1)
 
     args = parser.parse_args()
