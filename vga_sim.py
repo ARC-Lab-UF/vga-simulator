@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from argparse import ArgumentParser
+import argparse 
 from io import TextIOWrapper
 # If you aren't familiar with py, this error is better than reading a traceback
 try:
@@ -165,7 +165,7 @@ def render_vga(file: TextIOWrapper, width: int, height: int, pixel_freq_MHz: flo
         time_last_line = time
 
 def main():
-    parser = ArgumentParser("VGA Simulator", "Draws images from a corresponding HDL simulation file.")
+    parser = argparse.ArgumentParser("VGA Simulator", "Draws images from a corresponding HDL simulation file.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("filename", help="Output file from your testbench", type=str)
     parser.add_argument("width", help="Screen width in pixels", type=int, nargs='?', default=640)
     parser.add_argument("height", help="Screen height in pixels", type=int, nargs='?', default=480)
