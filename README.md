@@ -43,10 +43,12 @@ options:
 ```
 
 ## Examples
-To run a 640x480 @60Hz ([standard](http://tinyvga.com/vga-timing/640x480@60Hz)), run `./vga_sim.py vga_log.txt 640 480 25.175 48 33`
-or, `python vga_sim.py vga_log.txt 640 480 25.175 48 33`
+To run a 640x480 @60Hz ([standard](http://tinyvga.com/vga-timing/640x480@60Hz)), run `./vga_sim.py vga_log.txt`
+or, `python vga_sim.py vga_log.txt`
 
 Output images can be saved by using the save command in your image viewer.
+
+To customize resolution/framerate/etc., use the positional arguments specified in `./vga_sim.py --help`.
 
 # Testing
 To run unit tests, simply run `python -m unittest` in the root directory of the project.
