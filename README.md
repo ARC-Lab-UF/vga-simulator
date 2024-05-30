@@ -2,7 +2,7 @@
 
 Simulate display output of a VGA core by running a testbench.
 
-Original VGA Simulator: https://www.ericeastwood.com/lab/vga-simulator/
+Original VGA Simulator: [https://www.ericeastwood.com/blog/vga-simulator-getting-started/](https://ericeastwood.com/blog/vga-simulator-getting-started/)
 
 Adapted from [pvieito/VGASimulator.py](https://gist.github.com/pvieito/8cdb54a9a03fd36e51c8df6e331a3006)
 
